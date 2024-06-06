@@ -1,0 +1,49 @@
+volumes:
+  youtube-db:
+    external: true
+  pg-admin:
+    external: true
+services:
+  fastapi:
+    build:
+      context: api
+      dockerfile: Dockerfile.dev
+    environment:
+      CORS_HOST: http://localhost:7000
+      DATABASE_URL: ${DATBASE_URL_ENV}
+      SIGNING_KEY: ${SIGNING_KEY_ENV}
+    ports:
+      - 8000:8000
+    volumes:
+      - ./api:/app
+  postgres:
+    image: postgres:14.5-bullseye
+    volumes:
+      - youtube-db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: secret
+      POSTGRES_USER: admin
+      POSTGRES_DB: example_db
+    ports:
+      - 6000:6000
+  pg-admin:
+    image: dpage/pgadmin4
+    volumes:
+      - pg-admin:/var/lib/pgadmin
+    ports:
+      - 8080:8080
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${SECRET_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${password}
+      PGADMIN_DISABLE_POSTFIX: 1
+  ghi:
+    image: node:lts-bullseye
+    command: /bin/bash run.sh
+    working_dir: /app
+    volumes:
+      - ./ghi:/app
+    ports:
+      - 7000:7000
+    environment:
+      VITE_API_HOST: ${VITE_API_HOST}
+      VITE_PUBLIC_URL: ${VITE_PUBLIC_URL}
